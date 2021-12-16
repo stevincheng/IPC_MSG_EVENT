@@ -1,0 +1,30 @@
+
+SUBDIRS := $(dirs)
+
+.PHONY: all subdirs $(SUBDIRS) clean
+
+# make target  cd $$RootPath/$$dir; $(MAKE) -s all || exit "$$?" ;
+all:
+	@for dir in $(dirs);do\
+	(cd $$dir; $(MAKE) all || exit "$$?") || exit "$$?" ;\
+	done
+
+install:
+	@for dir in $(dirs);do\
+	(cd $$dir;$(MAKE) install);\
+	done
+
+package:
+	@for dir in $(dirs);do\
+	(cd $$dir;$(MAKE) package);\
+	done
+
+$(SUBDIRS):   
+	@$(MAKE) -C $@
+
+subdirs: $(SUBDIRS)
+
+clean:
+	@for dir in $(dirs);do\
+	(cd $$dir;$(MAKE) clean);\
+	done
