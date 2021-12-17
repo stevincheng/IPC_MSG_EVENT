@@ -91,11 +91,8 @@ void TcpServer::socketFdSelectRunLoop(){
 void TcpServer::parseReadFdBuff(char *buf,int len,int from_fd){
     char data[BUFSIZ] = {0};
     memcpy(data,buf,len);
-    LOGI(TAG,"parseReadFdBuff read buf len = %d",len);
-    for (size_t i = 0; i < len; i++){
-        printf("%02x ",data[i]);
-    }
-    printf("\n");
+
+    // LOG_RAW_DATA_HEX(TAG,"parseReadFdBuff buf = ",data,len);
     int index = 0;
     while (1)
     {
@@ -107,7 +104,7 @@ void TcpServer::parseReadFdBuff(char *buf,int len,int from_fd){
         index = index + cmd_len;
         if (index >= len)
         {
-            LOGI(TAG,"parseReadFdBuff will out buf size.");
+            // LOGI(TAG,"parseReadFdBuff will out buf size.");
             break;
         }
     }
@@ -119,11 +116,8 @@ int TcpServer::parseIpcCmdInt(char *data){
     return value;
 }
 void TcpServer::parseIpcCmd(char *data,int len,int from_fd){
-    // LOGI(TAG,"parseIpcCmd read buf len = %d",len);
-    // for (size_t i = 0; i < len; i++){
-    //     printf("%02x ",data[i]);
-    // }
-    // printf("\n");
+
+    LOG_RAW_DATA_HEX(TAG,"parseIpcCmd buf = ",data,len);
     int ipc_server_event_type = parseIpcCmdInt(data + 4);
     switch (ipc_server_event_type)
     {
@@ -132,10 +126,6 @@ void TcpServer::parseIpcCmd(char *data,int len,int from_fd){
             ipc_event_type_fd.event_type = parseIpcCmdInt(data + 8);
             ipc_event_type_fd.fd = from_fd;
             ipc_type_fd_vector.push_back(ipc_event_type_fd);
-            // for (IPC_EVENT_TYPE_FD_VECTOR::iterator it = ipc_type_fd_vector.begin();it!=ipc_type_fd_vector.end();it++)
-            // {
-            //     LOGI(TAG,"it->event_type = %08x it->fd = %d",it->event_type,it->fd);
-            // }
             break;
         }
         case IPC_TYPE_SEND_MSG:{
@@ -144,7 +134,7 @@ void TcpServer::parseIpcCmd(char *data,int len,int from_fd){
             for (IPC_EVENT_TYPE_FD_VECTOR::iterator it = ipc_type_fd_vector.begin();it!=ipc_type_fd_vector.end();it++)
             {
                 if (it->event_type == ipc_msg_type){
-                    LOGI(TAG,"this is a event of send msg.... from_fd = %d  to_fd = %d ipc_msg_type = %08x",from_fd,it->fd,ipc_msg_type);
+                    // LOGI(TAG,"this is a event of send msg.... from_fd = %d  to_fd = %d ipc_msg_type = %08x",from_fd,it->fd,ipc_msg_type);
                     send(it->fd,data,len,MSG_NOSIGNAL);
                 }
             }

@@ -1,3 +1,3 @@
 
-dirs := lib_log lib_ipc_event
+dirs := src
 include $(BUILDDIR)/Makefile.dirInc

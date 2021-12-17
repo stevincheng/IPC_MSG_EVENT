@@ -1,16 +1,20 @@
 OBJ_DIR=$(BUILDDIR)/build/obj/lib_ipc_event
-target=$(LIBDIR)/libipc_event_api.so
+target=$(LIBDIR)/liblog.so
 
 CXXFLAGS += -fPIC  \
-        -I../h	\
-		-I$(BUILDDIR)/libs/lib_log/h
+        -I../h	
 
 include $(BUILDDIR)/Makefile.srcInc
 
 LDFLAGS += -L$(LIBDIR)
 
-LDFLAGS += -lpthread \
-			-llog
+LDFLAGS += -lpthread
+
+# LDFLAGS += -lipc_evt_api    \
+#             -lslog   \
+#             -lcjson  \
+#             -lfileOpr  \
+#             -lcommInfoShm
 
 $(target): $(CXXOBJS)  
 	@echo "CXX $(target)"

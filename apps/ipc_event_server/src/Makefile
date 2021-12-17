@@ -5,10 +5,13 @@ target=$(BINDIR)/ipc_event_server
 
 CXXFLAGS += -I./  \
 			-I../h \
-			-I$(BUILDDIR)/libs/lib_log \
+			-I$(BUILDDIR)/libs/lib_log/h \
 			-I$(BUILDDIR)/libs/lib_ipc_event/h
 
-LDFLAGS += -lpthread 
+LDFLAGS += -L$(LIBDIR)
+
+LDFLAGS += -lpthread \
+			-llog
 
 include $(BUILDDIR)/Makefile.srcInc
 

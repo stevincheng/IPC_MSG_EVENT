@@ -1,34 +1,11 @@
 #include "client_b.h"
 
 int tcp_fd;
-// void *screen_input(void *arg){
-//     LOGI(TAG," screen_input . tcp_fd = %d",tcp_fd);
-//     while (1)
-//     {
-//         char input_buf[BUFSIZ] = "client_b";
-//         // fgets(input_buf,sizeof(input_buf),stdin);
-//         LOGI(TAG,"input_buf = %s",input_buf);
-//         write(tcp_fd,input_buf,strlen(input_buf));
-//         sleep(1);
-//     }
-// }
-// void *read_tcp_fd(void *arg){
-//     LOGI(TAG," read_tcp_fd . tcp_fd = %d",tcp_fd);
-//     char buf[BUFSIZ] = {0};
-//     while (1)
-//     {
-//         memset(buf,0,sizeof(buf));
-//         int n = read(tcp_fd,buf,sizeof(buf));
-//         LOGI(TAG,"buf = %s",buf);
-//         // sleep(1);
-//     }
-    
-// }
 void *ipc_msg_test_thread(void *arg){
     while (1)
     {
         char input_buf[BUFSIZ] = "client_b";
-        sleep(2);
+        sleep(1);
         ipc_send_msg(IPC_MSG_TYPE_22,input_buf,strlen(input_buf));
     }
 }

@@ -23,7 +23,7 @@ int ipc_tcp_conn_init(IPC_EVENT_API_CALLBACK callback){
     ipc_msg_fd = socket(AF_INET,SOCK_STREAM,0);
     if (-1 == ipc_msg_fd)
     {
-        LOGI(IPC_API_TAG,"init socket fd err.")
+        LOGI(IPC_API_TAG,"init socket fd err.");
         return -1;
     }
     struct sockaddr_in server_addr;
