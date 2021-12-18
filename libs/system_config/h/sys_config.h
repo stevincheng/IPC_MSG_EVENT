@@ -1,0 +1,5 @@
+#include <stdio.h>
+
+#define IPC_MSG_WORK_HOME_DIR	"IPC_MSG_WORK_HOME_DIR"
+#define IPC_MSG_LOG_DIR	"IPC_MSG_LOG_DIR"
+// #define ENV_ESYNC_LOG_DIR	"ESYNC_LOG_DIR"

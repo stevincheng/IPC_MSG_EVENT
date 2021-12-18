@@ -4,8 +4,15 @@ void *ipc_msg_test_thread(void *arg){
     while (1)
     {
         char input_buf[BUFSIZ] = "client_a";
+
+        char input_buf_1[BUFSIZ] = "client_a_1";
+        char input_buf_2[BUFSIZ] = "client_a_2";
+        char input_buf_3[BUFSIZ] = "client_a_3";
         sleep(1);
-        ipc_send_msg(IPC_MSG_TYPE_11,input_buf,strlen(input_buf));
+        ipc_send_msg(IPC_MSG_TYPE_1,input_buf,strlen(input_buf));
+        ipc_send_msg(IPC_MSG_TYPE_11,input_buf_1,strlen(input_buf_1));
+        ipc_send_msg(IPC_MSG_TYPE_3,input_buf_2,strlen(input_buf_2));
+        ipc_send_msg(IPC_MSG_TYPE_33,input_buf_3,strlen(input_buf_3));
     }
 }
 
@@ -38,6 +45,10 @@ int ipc_evt_type_regist(){
     return 0;
 }
 int main(int argc, char ** argv){
+    int log_res = Log_init();
+    if (log_res < 0)
+        printf("Log_init err.\n");
+    
     LOGI(TAG,"this is client_a process = %s",CLIENT_A_S);
     int ipc_init_res = ipc_tcp_conn_init(ipc_msg_event_callback);
     if (-1 == ipc_init_res)
