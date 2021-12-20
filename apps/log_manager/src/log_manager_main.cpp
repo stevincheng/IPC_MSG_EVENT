@@ -1,6 +1,7 @@
 #include "log_manager.h"
 
 static char log_cache_buf[LOG_CACHE_BUF_MAX_LEN];
+static int log_cache_len = 0;
 static char *log_dir_path;
 static char log_file_path[256];
 void *save_log_file_thread(void *arg){
@@ -11,22 +12,26 @@ void *save_log_file_thread(void *arg){
         Lock_Log_Shm();
         log_buf_shm = Get_log_shm();
         if (NULL != log_buf_shm){
-            memcpy(log_cache_buf+strlen(log_cache_buf),log_buf_shm->log_buf,strlen(log_buf_shm->log_buf));
+            memcpy(log_cache_buf+log_cache_len,log_buf_shm->log_buf,log_buf_shm->log_len);
+            log_cache_len += log_buf_shm->log_len;
             memset(log_buf_shm->log_buf,0,sizeof(log_buf_shm->log_buf));
+            log_buf_shm->log_len = 0;
         }
         Unlock_Log_Shm();
         cnt++;
-        if ( (LOG_CACHE_BUF_MAX_LEN - strlen(log_cache_buf) < LOG_SHM_BUF_MAX_LEN)  //log_cache_buf 即将写满，需要写入文件保存
-                || cnt >= 20 * 10 ){   //超过10s没有写文件进行保存了，需要及时写入
-            LOGI(TAG,"log_cache_buf no space or time out , fres space : %d cnt = %d",(LOG_CACHE_BUF_MAX_LEN - strlen(log_cache_buf)),cnt);
-            save_log_file(log_cache_buf,strlen(log_cache_buf),log_file_path);
+        if ( (LOG_CACHE_BUF_MAX_LEN - log_cache_len < LOG_SHM_BUF_MAX_LEN)  //log_cache_buf 即将写满，需要写入文件保存
+                || cnt >= SAVE_LOG_FILE_TIMEOUT ){   //超过5s没有写文件进行保存了，需要及时写入
+            LOGI(TAG,"log_cache_buf no space or time out , fres space : %d cnt = %d",(LOG_CACHE_BUF_MAX_LEN - log_cache_len),cnt);
+            save_log_file(log_cache_buf,log_cache_len,log_file_path);
             system("sync");
             memset(log_cache_buf,0,LOG_CACHE_BUF_MAX_LEN);
+            log_cache_len = 0;
             cnt = 0;
         }
-        usleep(50*1000);    //50ms循环一次，将共享内存中的log写入log_manager的log cache中
+        usleep(SAVE_LOG_FREQ_N_SEC);    //50ms循环一次，将共享内存中的log写入log_manager的log cache中
     }
 }
+
 int main(int argc, char ** argv){
     int log_res = Log_init();
     if (log_res < 0)

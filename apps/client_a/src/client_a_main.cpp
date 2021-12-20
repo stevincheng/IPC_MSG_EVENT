@@ -1,14 +1,14 @@
 #include "client_a.h"
 
 void *ipc_msg_test_thread(void *arg){
+    sleep(2);
     while (1)
     {
-        char input_buf[BUFSIZ] = "client_a";
-
+        sleep(1);
+        char input_buf[BUFSIZ] = "client_a_0";
         char input_buf_1[BUFSIZ] = "client_a_1";
         char input_buf_2[BUFSIZ] = "client_a_2";
         char input_buf_3[BUFSIZ] = "client_a_3";
-        sleep(1);
         ipc_send_msg(IPC_MSG_TYPE_1,input_buf,strlen(input_buf));
         ipc_send_msg(IPC_MSG_TYPE_11,input_buf_1,strlen(input_buf_1));
         ipc_send_msg(IPC_MSG_TYPE_3,input_buf_2,strlen(input_buf_2));
@@ -25,13 +25,7 @@ static const int ipc_event_type_list[] = {
 
 static int ipc_msg_event_callback(int type, void * usr_data, int usr_data_length){
     char *data = (char *) usr_data;
-    LOGI(TAG,"type = %x usr_data_length = %d data = %s",type,usr_data_length,data);
-    // for (size_t i = 0; i < usr_data_length; i++)
-    // {
-    //     printf("%02x ",data[i]);
-    // }
-    // printf("\n");
-    
+    LOGI(TAG,"type = %08x usr_data_length = %d data = %s",type,usr_data_length,data);
 }
 int ipc_evt_type_regist(){
     for (size_t i = 0; i < sizeof(ipc_event_type_list)/sizeof(ipc_event_type_list[0]); i++)

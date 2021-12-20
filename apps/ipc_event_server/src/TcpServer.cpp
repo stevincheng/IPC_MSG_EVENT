@@ -117,7 +117,7 @@ int TcpServer::parseIpcCmdInt(char *data){
 }
 void TcpServer::parseIpcCmd(char *data,int len,int from_fd){
 
-    LOG_RAW_DATA_HEX(TAG,"parseIpcCmd buf = ",data,len);
+    // LOG_RAW_DATA_HEX(TAG,"parseIpcCmd buf = ",data,len);
     int ipc_server_event_type = parseIpcCmdInt(data + 4);
     switch (ipc_server_event_type)
     {
@@ -135,6 +135,7 @@ void TcpServer::parseIpcCmd(char *data,int len,int from_fd){
             {
                 if (it->event_type == ipc_msg_type){
                     // LOGI(TAG,"this is a event of send msg.... from_fd = %d  to_fd = %d ipc_msg_type = %08x",from_fd,it->fd,ipc_msg_type);
+                    // LOGI(TAG,"ipc_msg_type = %08X buf = %s",ipc_msg_type,data+12);
                     send(it->fd,data,len,MSG_NOSIGNAL);
                 }
             }

@@ -6,6 +6,7 @@ static IPC_EVENT_API_CALLBACK ipc_msg_callback;
 static pthread_mutex_t ipc_msg_rcv_mutex;
 static pthread_cond_t ipc_msg_rcv_condition;
 static char ipc_rec_buf[BUFSIZ];
+static int ipc_once_read_n = 0;
 
 static void * ipc_msg_rcv_thread(void *arg);
 
@@ -14,6 +15,7 @@ int ipc_tcp_conn_init(IPC_EVENT_API_CALLBACK callback){
     memset(ipc_rec_buf,0,sizeof(ipc_rec_buf));
     ipc_msg_callback = callback;
 
+    memset(ipc_rec_buf,0,sizeof(ipc_rec_buf));
     pthread_cond_init(&ipc_msg_rcv_condition, NULL);
     pthread_mutex_init(&ipc_msg_rcv_mutex, NULL); 
     pthread_t ip_msg_rec_thread_t;
@@ -70,8 +72,7 @@ int ipc_regist_event_type(int type){
     char ipc_msg[IPC_REGIST_TYPE_MSG_LEN] = {0};
     init_ipc_msg_head(ipc_msg,IPC_REGIST_TYPE_MSG_LEN,IPC_TYPE_REGIST_EVENT_TYPE,type);
     int send_res = send(ipc_msg_fd,ipc_msg,sizeof(ipc_msg),MSG_NOSIGNAL);
-    if (send_res == -1)
-    {
+    if (send_res == -1){
         LOGI(IPC_API_TAG,"regist_ipc_event_type send ipc msg err.");
     }
     return 0;
@@ -79,21 +80,8 @@ int ipc_regist_event_type(int type){
 int ipc_send_msg(int type,char *data,int data_len){
     char ipc_msg[BUFSIZ] = {0};
     init_ipc_msg_head(ipc_msg,data_len + IPC_REGIST_TYPE_MSG_LEN,IPC_TYPE_SEND_MSG,type);
-    // printf("================\n");
-    // for (size_t i = 0; i < data_len+IPC_REGIST_TYPE_MSG_LEN; i++)
-    // {
-    //     printf("%02x ",ipc_msg[i]);
-    // }
-    // printf("\n");
-    // printf("*******************\n");
 
     memcpy(ipc_msg+IPC_REGIST_TYPE_MSG_LEN,data,data_len);
-    // LOGI(IPC_API_TAG,"ipc_send_msg data_len = %d",data_len);
-    // for (size_t i = 0; i < (data_len+IPC_REGIST_TYPE_MSG_LEN); i++)
-    // {
-    //     printf("%02x ",ipc_msg[i]);
-    // }
-    // printf("\n");
     
     int send_res = send(ipc_msg_fd,ipc_msg,data_len+IPC_REGIST_TYPE_MSG_LEN,MSG_NOSIGNAL);
     if (send_res == -1)
@@ -110,20 +98,36 @@ int parse_ipc_cmd_int(char *data){
     return value;
 }
 int is_ipc_rec_buf_empty(){
-    return !(ipc_rec_buf[0]&ipc_rec_buf[1]&ipc_rec_buf[2]&ipc_rec_buf[3]);
+    int is_empty = 0;
+    if (ipc_rec_buf[0] == 0 && ipc_rec_buf[1] == 0 && ipc_rec_buf[2] == 0 && ipc_rec_buf[3] == 0 ){
+        is_empty = 1;
+    }
+    return is_empty;
 }
 static void * ipc_msg_rcv_thread(void *arg){
-    while (1)
-    {
+    while (1){
+        int index = 0;
+        int ipc_cb_buf_n = 0;
+        char ipc_cb_buf[BUFSIZ] = {0};
         pthread_mutex_lock(&ipc_msg_rcv_mutex);
-        if (is_ipc_rec_buf_empty())
-        {
+        if (is_ipc_rec_buf_empty()){
             pthread_cond_wait(&ipc_msg_rcv_condition, &ipc_msg_rcv_mutex);
         }
-        int type = parse_ipc_cmd_int(ipc_rec_buf+8);
-        int data_len = parse_ipc_cmd_int(ipc_rec_buf) - IPC_REGIST_TYPE_MSG_LEN;
-        ipc_msg_callback(type,ipc_rec_buf+IPC_REGIST_TYPE_MSG_LEN,data_len);
+        memcpy(ipc_cb_buf,ipc_rec_buf,BUFSIZ);
+        ipc_cb_buf_n = ipc_once_read_n;
+        memset(ipc_rec_buf,0,BUFSIZ);
         pthread_mutex_unlock(&ipc_msg_rcv_mutex);
+        while (1){
+            int type = parse_ipc_cmd_int(ipc_cb_buf+index+8);
+            int cmd_data_len = parse_ipc_cmd_int(ipc_cb_buf+index);
+            ipc_msg_callback(type,ipc_cb_buf+index+IPC_REGIST_TYPE_MSG_LEN,(cmd_data_len - IPC_REGIST_TYPE_MSG_LEN));
+            // LOGI(IPC_API_TAG,"ipc_msg_rcv_thread DATA = %s",ipc_cb_buf+index+IPC_REGIST_TYPE_MSG_LEN);
+            index += cmd_data_len;
+            // LOGI(IPC_API_TAG,"index = %d ipc_cb_buf_n = %d",index,ipc_cb_buf_n);
+            if (index >= ipc_cb_buf_n){
+                break;
+            }
+        }
     }
 }
     
@@ -141,8 +145,11 @@ int ipc_client_rec_loop(){
             LOGI(IPC_API_TAG,"client_ipc_rec_loop select err.");
         }else{
             pthread_mutex_lock(&ipc_msg_rcv_mutex);
+            memset(ipc_rec_buf,0,sizeof(ipc_rec_buf));
             int n = read(ipc_msg_fd,ipc_rec_buf,sizeof(ipc_rec_buf));
             if (n > 0){
+                ipc_once_read_n = n;
+                // LOG_RAW_DATA_HEX(IPC_API_TAG,"ipc_client_rec_loop",ipc_rec_buf,n);
                 pthread_cond_signal(&ipc_msg_rcv_condition);
             }
             pthread_mutex_unlock(&ipc_msg_rcv_mutex);

@@ -10,8 +10,13 @@
 // #include <sys/ipc.h>
 
 #define LOG_BUF_MAX_LEN     1024
-#define LOG_SHM_BUF_MAX_LEN     (LOG_BUF_MAX_LEN *4)
-#define LOG_SHM_PATH "/home/stevin/user/IPC_MSG_EVENT/log/"
+#define LOG_SHM_BUF_MAX_LEN     (LOG_BUF_MAX_LEN * 8)
+#define LOG_SHM_PATH "/home/stevin/user/IPC_MSG_EVENT/log_shm"
+
+#define LOG_LEVEL_STRING_ERR "err"
+#define LOG_LEVEL_STRING_WARN "warn"
+#define LOG_LEVEL_STRING_INFO "info"
+#define LOG_LEVEL_STRING_DEBUG "debug"
 
 enum LOGL_EVEL
 {
@@ -26,6 +31,7 @@ typedef struct
 {
     pthread_mutex_t mutexLock;
     char log_buf[LOG_SHM_BUF_MAX_LEN];
+    int log_len;
 } LOG_BUF_SHM;
 
 
@@ -38,14 +44,31 @@ extern int log_rawdata_hex(const int level,const char *file_name,const int line_
 
 #ifndef LOG_RAW_DATA_HEX
 #define LOG_RAW_DATA_HEX(LOG_TAG,DATA_PREFIX,DATA,LEN,...) do {\
-        (log_rawdata_hex(LOG_LVL_INFO,__FILE__,__LINE__,LOG_TAG,DATA_PREFIX,DATA,LEN)); \
+        (log_rawdata_hex(LOG_LVL_DEBUG,__FILE__,__LINE__,LOG_TAG,DATA_PREFIX,DATA,LEN)); \
     }while(0)
 #endif
 
+#ifndef LOGE
+#define LOGE(LOG_TAG,...) do {\
+        (log_output(LOG_LVL_ERROR,__FILE__,__LINE__,LOG_TAG,##__VA_ARGS__)); \
+    }while(0)
+#endif
+
+#ifndef LOGW
+#define LOGW(LOG_TAG,...) do {\
+        (log_output(LOG_LVL_WARN,__FILE__,__LINE__,LOG_TAG,##__VA_ARGS__)); \
+    }while(0)
+#endif
 
 #ifndef LOGI
 #define LOGI(LOG_TAG,...) do {\
         (log_output(LOG_LVL_INFO,__FILE__,__LINE__,LOG_TAG,##__VA_ARGS__)); \
+    }while(0)
+#endif
+
+#ifndef LOGD
+#define LOGD(LOG_TAG,...) do {\
+        (log_output(LOG_LVL_DEBUG,__FILE__,__LINE__,LOG_TAG,##__VA_ARGS__)); \
     }while(0)
 #endif
 

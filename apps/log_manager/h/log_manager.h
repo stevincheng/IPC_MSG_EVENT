@@ -13,7 +13,11 @@
 
 #define TAG "log_manager"
 #define LOG_FILE "/log_1.log"
-#define LOG_CACHE_BUF_MAX_LEN   (LOG_BUF_MAX_LEN*20)
+#define LOG_CACHE_BUF_MAX_LEN   (LOG_BUF_MAX_LEN * 40)
+
+#define SAVE_LOG_FREQ_N_SEC (50*1000) //shm log to log manager save freq (unit : ns)
+#define SAVE_LOG_FILE_TIMEOUT ((1000*1000/SAVE_LOG_FREQ_N_SEC) * 1) //最低5s保存log到文件
+
 int save_log_file(char *data,int data_len,char *file_name);
 
 // void ota_upgrade_result(int result);

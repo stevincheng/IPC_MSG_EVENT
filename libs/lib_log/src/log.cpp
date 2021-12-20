@@ -5,8 +5,7 @@ static int shmid;
 static LOG_BUF_SHM* log_buf_shm = NULL;
 
 void log_add_newline_symbol(char *data,int max_len){
-    if (strlen(data) >= max_len)
-    {
+    if (strlen(data) >= max_len){
         if (data[max_len] != '\n')
             data[max_len] = '\n';
     }else{
@@ -14,33 +13,60 @@ void log_add_newline_symbol(char *data,int max_len){
             data[strlen(data)] = '\n';
     }
 }
+void log_get_level_string(char *level_s,const int level){
+    switch (level){
+        case LOG_LVL_ERROR:
+            memcpy(level_s,LOG_LEVEL_STRING_ERR,sizeof(LOG_LEVEL_STRING_ERR));
+            break;
+        case LOG_LVL_WARN:
+            memcpy(level_s,LOG_LEVEL_STRING_WARN,sizeof(LOG_LEVEL_STRING_WARN));
+            break;
+        case LOG_LVL_INFO:
+            memcpy(level_s,LOG_LEVEL_STRING_INFO,sizeof(LOG_LEVEL_STRING_INFO));
+            break;
+        case LOG_LVL_DEBUG:
+            memcpy(level_s,LOG_LEVEL_STRING_DEBUG,sizeof(LOG_LEVEL_STRING_DEBUG));
+            break;
+        default:
+            memcpy(level_s,LOG_LEVEL_STRING_DEBUG,sizeof(LOG_LEVEL_STRING_DEBUG));
+            break;
+    }
+}
+void log_get_cur_time_string(char *time_s){
+    time_t timep;
+    struct tm *p;
+    time(&timep);
+    p = localtime(&timep);
+    sprintf(time_s,"%d-%d-%d %d:%d:%d",p->tm_year+1900,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
+}
 void log_to_shm(char *data,int len){
-    // if (1)
-    // {
-    //     return;
-    // }
-    
     Lock_Log_Shm();
     int wr_len = 0;
-    if (LOG_SHM_BUF_MAX_LEN - strlen(log_buf_shm->log_buf) > len){
+    if (LOG_SHM_BUF_MAX_LEN - log_buf_shm->log_len > len){
         wr_len = len;
     }else{
-        wr_len = LOG_SHM_BUF_MAX_LEN - strlen(log_buf_shm->log_buf);
+        wr_len = LOG_SHM_BUF_MAX_LEN - log_buf_shm->log_len;
         printf("log_shm_buf cur allow wr num too less, hope len = %d ; can wr_len = %d \n",len,wr_len);
     }
-    memcpy(log_buf_shm->log_buf + strlen(log_buf_shm->log_buf),data,wr_len);
+    memcpy(log_buf_shm->log_buf + log_buf_shm->log_len,data,wr_len);
+    log_buf_shm->log_len += wr_len;
     Unlock_Log_Shm();
 }
 int log_output(const int level,const char *file_name,const int line_num,const char *tag,const char *format, ...){
     va_list args;
     char log_buf[LOG_BUF_MAX_LEN] = {0};
 
-    // sprintf(log_buf,"%s %s %s:%d [%s] ",__DATE__,__TIME__,file_name,line_num,tag);
-    sprintf(log_buf+strlen(log_buf),"%s ",__DATE__);
-    sprintf(log_buf+strlen(log_buf),"%s ",__TIME__);
+    char time_string[100] = {0};
+    log_get_cur_time_string(time_string);
+    sprintf(log_buf+strlen(log_buf),"%s ",time_string);
+
     sprintf(log_buf+strlen(log_buf),"%s:",file_name);
-    sprintf(log_buf+strlen(log_buf),"%d ",line_num);
-    sprintf(log_buf+strlen(log_buf),"[%s] ",tag);
+    sprintf(log_buf+strlen(log_buf),"%d",line_num);
+    sprintf(log_buf+strlen(log_buf),"[%s]",tag);
+
+    char log_lvl_string[10] = {0};
+    log_get_level_string(log_lvl_string,level);
+    sprintf(log_buf+strlen(log_buf),"[%s] ",log_lvl_string);
 
     va_start(args, format);
     int ret = vsnprintf(log_buf + strlen(log_buf), LOG_BUF_MAX_LEN - strlen(log_buf), format, args);
@@ -49,7 +75,8 @@ int log_output(const int level,const char *file_name,const int line_num,const ch
     log_add_newline_symbol(log_buf,LOG_BUF_MAX_LEN);
 
     printf("%s",log_buf);
-    log_to_shm(log_buf,strlen(log_buf));
+    // if (level <= LOG_LVL_INFO)
+        log_to_shm(log_buf,strlen(log_buf));
     return 0;
 }
 
@@ -57,12 +84,18 @@ int log_rawdata_hex(const int level,const char *file_name,const int line_num,
                     const char *tag,const char *data_prefix,const char *data,const int len){
     char log_buf[LOG_BUF_MAX_LEN] = {0};
 
-    // sprintf(log_buf,"%s %s %s:%d [%s] %s ",__DATE__,__TIME__,file_name,line_num,tag,data_prefix);
-    sprintf(log_buf+strlen(log_buf),"%s ",__DATE__);
-    sprintf(log_buf+strlen(log_buf),"%s ",__TIME__);
+    char time_string[100] = {0};
+    log_get_cur_time_string(time_string);
+    sprintf(log_buf+strlen(log_buf),"%s ",time_string);
+
     sprintf(log_buf+strlen(log_buf),"%s:",file_name);
-    sprintf(log_buf+strlen(log_buf),"%d ",line_num);
-    sprintf(log_buf+strlen(log_buf),"[%s] ",tag);
+    sprintf(log_buf+strlen(log_buf),"%d",line_num);
+    sprintf(log_buf+strlen(log_buf),"[%s]",tag);
+
+    char log_lvl_string[10] = {0};
+    log_get_level_string(log_lvl_string,level);
+    sprintf(log_buf+strlen(log_buf),"[%s] ",log_lvl_string);
+
     sprintf(log_buf+strlen(log_buf),"%s ",data_prefix);
 
     int raw_data_max_len = (len + strlen(log_buf) < LOG_BUF_MAX_LEN) ? len : (LOG_BUF_MAX_LEN - strlen(log_buf));
@@ -73,7 +106,8 @@ int log_rawdata_hex(const int level,const char *file_name,const int line_num,
     log_add_newline_symbol(log_buf,LOG_BUF_MAX_LEN);
 
     printf("%s",log_buf);
-    log_to_shm(log_buf,strlen(log_buf));
+    if (level <= LOG_LVL_INFO)
+        log_to_shm(log_buf,strlen(log_buf));
     return 0;
 }
 int Lock_Log_Shm(void){   
@@ -107,7 +141,7 @@ LOG_BUF_SHM* Get_log_shm(void)
 
 int Log_init(){
     int ret = 0;
-    key_t key = ftok("/home/stevin/user/IPC_MSG_EVENT/log_shm",66);
+    key_t key = ftok(LOG_SHM_PATH,66);
     if(key < 0){
         printf("get logshm key error:%s\n",strerror(errno));
         ret = -1;

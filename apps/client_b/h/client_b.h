@@ -14,7 +14,7 @@
 #include "ipc_event_type.h"
 
 #define CLIENT_B_S "CLIENT_B_S"
-#define TAG "cleient_b"
+#define TAG "client_b"
 // void ota_upgrade_result(int result);
 // typedef struct
 // {
