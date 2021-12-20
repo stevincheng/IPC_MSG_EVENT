@@ -3,6 +3,7 @@
 
 static int shmid;
 static LOG_BUF_SHM* log_buf_shm = NULL;
+static char *log_shm_path;
 
 void log_add_newline_symbol(char *data,int max_len){
     if (strlen(data) >= max_len){
@@ -141,7 +142,9 @@ LOG_BUF_SHM* Get_log_shm(void)
 
 int Log_init(){
     int ret = 0;
-    key_t key = ftok(LOG_SHM_PATH,66);
+    log_shm_path = getenv(LOG_SHM_PATH);
+    printf("log_shm_path = %s\n",log_shm_path);
+    key_t key = ftok(log_shm_path,66);
     if(key < 0){
         printf("get logshm key error:%s\n",strerror(errno));
         ret = -1;

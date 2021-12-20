@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
+#include <stdlib.h>
 #include <errno.h>
 #include <sys/shm.h>
 #include <pthread.h>
@@ -11,7 +12,7 @@
 
 #define LOG_BUF_MAX_LEN     1024
 #define LOG_SHM_BUF_MAX_LEN     (LOG_BUF_MAX_LEN * 8)
-#define LOG_SHM_PATH "/home/stevin/user/IPC_MSG_EVENT/log_shm"
+#define LOG_SHM_PATH "LOG_SHM_PATH"
 
 #define LOG_LEVEL_STRING_ERR "err"
 #define LOG_LEVEL_STRING_WARN "warn"

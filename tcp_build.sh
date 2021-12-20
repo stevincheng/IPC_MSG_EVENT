@@ -15,4 +15,6 @@ echo $LIBDIR
 mkdir -p $LIBDIR
 export LIBDIR
 
+# source /home/stevin/work/EC20/extern/ql-oe_EC20/ql-ol-crosstool/ql-ol-crosstool-env-init
+
 make

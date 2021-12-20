@@ -4,8 +4,10 @@ init()
 {
     export IPC_MSG_WORK_HOME_DIR=/home/stevin/user/IPC_MSG_EVENT/ipc_msg_work_dir
     export IPC_MSG_LOG_DIR=$IPC_MSG_WORK_HOME_DIR/log
+    export LOG_SHM_PATH=$IPC_MSG_WORK_HOME_DIR/log_shm
     rm $IPC_MSG_LOG_DIR/* -rf
     mkdir -p $IPC_MSG_LOG_DIR
+    mkdir -p $LOG_SHM_PATH
     export LD_LIBRARY_PATH=$CUR_PATH/build/lib:$LD_LIBRARY_PATH
 }
 start_all_app(){
