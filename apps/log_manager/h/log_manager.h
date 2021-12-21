@@ -26,13 +26,15 @@
 #define SAVE_LOG_FREQ_N_SEC (50*1000) //shm log to log manager save freq (unit : ns)
 #define SAVE_LOG_FILE_TIMEOUT ((1000*1000/SAVE_LOG_FREQ_N_SEC) * 1) //最低5s保存log到文件
 
+struct LOG_SAVE_FILE_INFO
+{
+    char log_dir[256];
+    char log_file_path[256];
+    FILE *log_file_fp;
+    DIR *log_dir_fd;
+};
+
 int save_log_file(char *data,int data_len,char *file_name);
 
-// void ota_upgrade_result(int result);
-// typedef struct
-// {
-//     unsigned char mode;
-//     unsigned int timeout;
-// }EXL4_TBOX_OTA_MODE;
 
 #endif

@@ -78,6 +78,7 @@ int ipc_regist_event_type(int type){
     return 0;
 }
 int ipc_send_msg(int type,char *data,int data_len){
+    LOG_RAW_DATA_HEX(IPC_API_TAG,"ipc_send_msg",data,data_len);
     char ipc_msg[BUFSIZ] = {0};
     init_ipc_msg_head(ipc_msg,data_len + IPC_REGIST_TYPE_MSG_LEN,IPC_TYPE_SEND_MSG,type);
 
