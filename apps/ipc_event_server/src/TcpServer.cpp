@@ -92,7 +92,7 @@ void TcpServer::parseReadFdBuff(char *buf,int len,int from_fd){
     char data[BUFSIZ] = {0};
     memcpy(data,buf,len);
 
-    // LOG_RAW_DATA_HEX(TAG,"parseReadFdBuff buf = ",data,len);
+    LOG_RAW_DATA_HEX(TAG,"parseReadFdBuff buf = ",data,len);
     int index = 0;
     while (1)
     {

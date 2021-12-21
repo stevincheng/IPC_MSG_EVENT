@@ -5,7 +5,8 @@ void *ipc_msg_test_thread(void *arg){
     sleep(2);
     while (1)
     {
-        sleep(1);
+        // sleep(1);
+        usleep(1000*500);
         char input_buf[BUFSIZ] = "client_b_0";
         char input_buf_1[BUFSIZ] = "client_b_1";
         char input_buf_2[BUFSIZ] = "client_b_2";

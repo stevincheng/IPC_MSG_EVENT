@@ -3,7 +3,68 @@
 static char log_cache_buf[LOG_CACHE_BUF_MAX_LEN];
 static int log_cache_len = 0;
 static char *log_dir_path;
-static char log_file_path[256];
+int get_log_file_sn(char *file_name){
+    int h = file_name[strlen(LOG_FILE_NAME_PREFIX)] - '0';
+    int l = file_name[strlen(LOG_FILE_NAME_PREFIX)+1] - '0';
+    return h * 10 + l;
+}
+int get_log_save_file_path(char *file_path){
+    DIR *dirptr = NULL;
+    struct dirent *entry;
+    dirptr = opendir(log_dir_path);
+    int log_files_max_num = 0;
+
+    if (dirptr == NULL){
+        printf("opendir err\n");
+        return -1;
+    }
+    while (entry = readdir(dirptr)){
+        if (strstr(entry->d_name,LOG_FILE_NAME_SUFFIX) != NULL){
+            int log_file_sn = get_log_file_sn(entry->d_name);
+            if (log_file_sn > log_files_max_num){
+                log_files_max_num = log_file_sn;
+            }
+        }
+    }
+    if (dirptr)
+        closedir(dirptr);
+    char latest_file_path[256] = {0};
+    sprintf(latest_file_path,"%s/%s%02d%s",log_dir_path,LOG_FILE_NAME_PREFIX,log_files_max_num,LOG_FILE_NAME_SUFFIX);
+    struct stat file_info;
+    if (stat(latest_file_path,&file_info) == -1){
+        LOGE(TAG,"stat file info err,latest_file_path = %s",latest_file_path);
+    }else{
+        if (file_info.st_size < LOG_ONE_FILE_MAX_SIZE){
+            memcpy(file_path,latest_file_path,strlen(latest_file_path));
+            return 0;
+        }
+    }
+    log_files_max_num ++;
+    if (log_files_max_num > LOG_FILE_MAX_NUM){
+        char rm_path[256] = {0};
+        sprintf(rm_path,"%s/%s%02d%s",log_dir_path,LOG_FILE_NAME_PREFIX,LOG_FILE_MIN_NUM,LOG_FILE_NAME_SUFFIX);
+        if(remove(rm_path) == -1){
+           LOGE(TAG,"remove file err,rm_path = %s",rm_path);
+        }
+        for (int i = 2; i <= LOG_FILE_MAX_NUM; i++){
+            char old_path[256] = {0};
+            char new_path[256] = {0};
+            sprintf(old_path,"%s/%s%02d%s",log_dir_path,LOG_FILE_NAME_PREFIX,i,LOG_FILE_NAME_SUFFIX);
+            sprintf(new_path,"%s/%s%02d%s",log_dir_path,LOG_FILE_NAME_PREFIX,i-1,LOG_FILE_NAME_SUFFIX);
+            if (access(old_path,F_OK) == -1){
+                LOGI(TAG,"mv file no exisits : old_path = %s",old_path);
+                continue;
+            }
+            if (rename(old_path,new_path) == -1){
+                LOGE(TAG,"rename file err,old_path = %s new_path = %s",old_path,new_path);
+            }
+        }
+        log_files_max_num = LOG_FILE_MAX_NUM;
+    }
+    sprintf(file_path,"%s/%s%02d%s",log_dir_path,LOG_FILE_NAME_PREFIX,log_files_max_num,LOG_FILE_NAME_SUFFIX);
+    // LOGI(TAG,"log save file::::::::: %s",file_path);
+    return 0;
+}
 void *save_log_file_thread(void *arg){
     int cnt = 0;
     memset(log_cache_buf,0,LOG_CACHE_BUF_MAX_LEN);
@@ -22,6 +83,8 @@ void *save_log_file_thread(void *arg){
         if ( (LOG_CACHE_BUF_MAX_LEN - log_cache_len < LOG_SHM_BUF_MAX_LEN)  //log_cache_buf 即将写满，需要写入文件保存
                 || cnt >= SAVE_LOG_FILE_TIMEOUT ){   //超过5s没有写文件进行保存了，需要及时写入
             LOGI(TAG,"log_cache_buf no space or time out , fres space : %d cnt = %d",(LOG_CACHE_BUF_MAX_LEN - log_cache_len),cnt);
+            char log_file_path[256] = {0};
+            int res = get_log_save_file_path(log_file_path);
             save_log_file(log_cache_buf,log_cache_len,log_file_path);
             system("sync");
             memset(log_cache_buf,0,LOG_CACHE_BUF_MAX_LEN);
@@ -38,12 +101,7 @@ int main(int argc, char ** argv){
         printf("Log_init err.\n");
     
     log_dir_path = getenv(IPC_MSG_LOG_DIR);
-    memset(log_file_path,0,sizeof(log_file_path));
     LOGI(TAG,"this is log_manager process . log_dir_path = %s ",log_dir_path);
-    memcpy(log_file_path,log_dir_path,strlen(log_dir_path));
-    memcpy(log_file_path+strlen(log_file_path),LOG_FILE,sizeof(LOG_FILE));
-    LOGI(TAG,"log_file_path = %s",log_file_path);
-
     pthread_t save_log_file_thread_t;
     pthread_create(&save_log_file_thread_t, NULL, save_log_file_thread, NULL);
     pthread_detach(save_log_file_thread_t);
@@ -55,7 +113,6 @@ int main(int argc, char ** argv){
     return 0;
 }
 int save_log_file(char *data,int data_len,char *file_name){
-
     FILE *fp;
     size_t nLen = 0;
     int nRet;
@@ -65,7 +122,7 @@ int save_log_file(char *data,int data_len,char *file_name){
     }
     fp = fopen(file_name, "a+");
     if (0 == fp){
-        LOGI(TAG,"open file err, file name : %s",file_name);
+        LOGI(TAG,"open file err, file name : %s :::: %s",file_name,strerror(errno));
         return -1;
     }
     nLen = fwrite(data, 1, data_len, fp);

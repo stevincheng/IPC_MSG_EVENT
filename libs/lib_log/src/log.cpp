@@ -38,7 +38,7 @@ void log_get_cur_time_string(char *time_s){
     struct tm *p;
     time(&timep);
     p = localtime(&timep);
-    sprintf(time_s,"%d-%d-%d %d:%d:%d",p->tm_year+1900,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
+    sprintf(time_s,"%d-%02d-%02d %02d:%02d:%02d",p->tm_year+1900,p->tm_mon+1,p->tm_mday,p->tm_hour,p->tm_min,p->tm_sec);
 }
 void log_to_shm(char *data,int len){
     Lock_Log_Shm();
@@ -107,7 +107,7 @@ int log_rawdata_hex(const int level,const char *file_name,const int line_num,
     log_add_newline_symbol(log_buf,LOG_BUF_MAX_LEN);
 
     printf("%s",log_buf);
-    if (level <= LOG_LVL_INFO)
+    // if (level <= LOG_LVL_INFO)
         log_to_shm(log_buf,strlen(log_buf));
     return 0;
 }

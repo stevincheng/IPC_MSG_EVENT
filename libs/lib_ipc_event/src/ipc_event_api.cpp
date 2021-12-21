@@ -123,7 +123,7 @@ static void * ipc_msg_rcv_thread(void *arg){
             ipc_msg_callback(type,ipc_cb_buf+index+IPC_REGIST_TYPE_MSG_LEN,(cmd_data_len - IPC_REGIST_TYPE_MSG_LEN));
             // LOGI(IPC_API_TAG,"ipc_msg_rcv_thread DATA = %s",ipc_cb_buf+index+IPC_REGIST_TYPE_MSG_LEN);
             index += cmd_data_len;
-            // LOGI(IPC_API_TAG,"index = %d ipc_cb_buf_n = %d",index,ipc_cb_buf_n);
+            LOGI(IPC_API_TAG,"index = %d ipc_cb_buf_n = %d",index,ipc_cb_buf_n);
             if (index >= ipc_cb_buf_n){
                 break;
             }
@@ -149,7 +149,7 @@ int ipc_client_rec_loop(){
             int n = read(ipc_msg_fd,ipc_rec_buf,sizeof(ipc_rec_buf));
             if (n > 0){
                 ipc_once_read_n = n;
-                // LOG_RAW_DATA_HEX(IPC_API_TAG,"ipc_client_rec_loop",ipc_rec_buf,n);
+                LOG_RAW_DATA_HEX(IPC_API_TAG,"ipc_client_rec_loop",ipc_rec_buf,n);
                 pthread_cond_signal(&ipc_msg_rcv_condition);
             }
             pthread_mutex_unlock(&ipc_msg_rcv_mutex);

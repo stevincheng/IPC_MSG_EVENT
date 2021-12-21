@@ -11,8 +11,16 @@
 #include <pthread.h>
 #include "sys_config.h"
 
+#include<sys/types.h>
+#include<sys/stat.h>
+#include<dirent.h>
+
 #define TAG "log_manager"
-#define LOG_FILE "/log_1.log"
+#define LOG_FILE_MAX_NUM 20
+#define LOG_FILE_MIN_NUM 1
+#define LOG_ONE_FILE_MAX_SIZE (LOG_BUF_MAX_LEN * LOG_BUF_MAX_LEN)
+#define LOG_FILE_NAME_PREFIX "log_"
+#define LOG_FILE_NAME_SUFFIX ".log"
 #define LOG_CACHE_BUF_MAX_LEN   (LOG_BUF_MAX_LEN * 40)
 
 #define SAVE_LOG_FREQ_N_SEC (50*1000) //shm log to log manager save freq (unit : ns)
